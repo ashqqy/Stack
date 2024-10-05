@@ -1,31 +1,50 @@
+/// @file
+
 #include "MyAllocation.h"
-#include "Constants.h"
 
 #include <assert.h>
-#include <cstring> //memset
 
 //-------------------------------------------------------
 
-void* MyCalloc (size_t n_elems, size_t size_elems, StackElem_t memset_elem)
+/// @brief Функция выделения блока памяти
+/// @param n_elems Новое количество элементов для выделения
+/// @param size_elems Размер элементов для выделения
+/// @param poison Указатель на ядовитое значение, которым заполнятся выделенные ячейки
+/// @return Указатель на выделенный блок памяти
+
+void* MyCalloc (size_t n_elems, size_t size_elems, void* poison)
     {
     void* mem_ptr = calloc (n_elems, size_elems);
-    assert (mem_ptr != NULL);
-    memset (mem_ptr, memset_elem, n_elems);
+    for (int i = 0; i < n_elems; i++)
+        memcpy (mem_ptr, poison, size_elems);
     return mem_ptr;
     }
 
 //-------------------------------------------------------
 
-void* MyRecalloc (void* memory, size_t n_elements, size_t size_elements, size_t previous_n_elements, StackElem_t memset_elem)
-    {
-    memory = realloc (memory, n_elements * size_elements);
-    assert (memory != NULL);
+/// @brief Функция изменения размера уже выделенного блока памяти
+/// @param[in] memory Указатель на выделенный блок памяти
+/// @param[in] n_elements Новое количество элементов для выделения
+/// @param[in] size_elements Размер элементов для выделения
+/// @param[in] previous_n_elements Количество элементов в блоке до вызова функции
+/// @param[in] poison Указатель на ядовитое значение, которым заполнятся добавленные ячейки
+/// @return Указатель на перевыделенный блок памяти
 
+void* MyRecalloc (void* memory, size_t n_elements, size_t size_elements, size_t previous_n_elements, void* poison)
+    {
+    void* save_memory = memory;
+    memory = realloc (memory, n_elements * size_elements);
+    /// Если память не удалось перевыделить, то освобождаем старый указатель и возвращаем 0
+    if (memory == NULL)
+        {
+        free (save_memory); save_memory = NULL;
+        return NULL;
+        }
+
+    /// Если увеличиваем блок памяти, то новые ячейки заполняем ядовитым значением
     if (previous_n_elements < n_elements)
         for (int i = 0; i < n_elements - previous_n_elements; i++)
-            {
-            *((StackElem_t*) memory + previous_n_elements + i) = memset_elem;
-            }
+            memcpy(((char*) memory + (previous_n_elements + i) * size_elements), poison, size_elements);
 
     return memory;
     }
