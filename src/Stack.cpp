@@ -7,7 +7,7 @@
 
 //-------------------------------------------------------
 
-#define STACK_ASSERT(stack) StackAssert (stack, __FILE__, __LINE__);
+#define STACK_ASSERT(stack) StackAssert (stack, __FILE__, __LINE__, __func__);
 
 //-------------------------------------------------------
 
@@ -58,7 +58,7 @@ STACK_ERRORS StackDestroy (Stack_t* stack)
 
 STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push)
     {
-    STACK_ASSERT (stack); // FIXME граничный элемент ядовитый
+    STACK_ASSERT (stack);
 
     if (stack->size == stack->capacity)
         {
@@ -107,13 +107,13 @@ STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop)
 STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef)
     {
     stack->data = (StackElem_t*) MyRecalloc (stack->data, (int) stack->capacity * new_size_coef + N_CANARIES, 
-                                                 sizeof (StackElem_t), stack->capacity, (void*) &STACK_POISON);
+                                             sizeof (StackElem_t), stack->capacity + N_CANARIES - 1, (void*) &STACK_POISON);
     if (stack->data == NULL)
         return CANNOT_ALLOCATE_MEMORY;           
 
     stack->capacity = (int) stack->capacity * new_size_coef;
 
-    *stack->data = CANARY;
+    stack->data[0] = CANARY;
     stack->data[stack->capacity + 1] = CANARY; // +1 из-за левой канарейки
 
     return OK;
@@ -148,13 +148,13 @@ STACK_ERRORS StackOk (Stack_t* stack)
 
 //-------------------------------------------------------
 
-void StackAssert (Stack_t* stack, const char* file, int line) // TODO __func__
+void StackAssert (Stack_t* stack, const char* file, int line, const char* func)
     {
     STACK_ERRORS stack_error = StackOk (stack);
     if (stack_error != OK)
         {
         printf ("%sERROR:%s %s %s \n", RED_COLOR, MAGENTA_COLOR, StackErrDescr (stack_error), DEFAULT_COLOR);
-        StackDump (stack, file, line);
+        StackDump (stack, file, line, func);
         assert ("StackOk" && !OK);
         }
     }
@@ -188,7 +188,7 @@ const char* StackErrDescr (STACK_ERRORS stack_error)
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
+STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char* func)
     {
     #define $PRINTERROR(error) printf ("%s" #error " (DUMP) %s \n", MAGENTA_COLOR, DEFAULT_COLOR); return error;
 
@@ -197,7 +197,7 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
         $PRINTERROR (STACK_BAD_STRUCT);
         }
 
-    printf ("Stack_t [0x%p] at %s:%d \n", stack, file, n_line);
+    printf ("Stack_t [0x%p] at %s:%d (%s)\n", stack, file, n_line, func);
     printf ("    { \n");
     printf ("    left_canary (struct) = %d \n", stack->left_canary);
     printf ("    size = %d \n", stack->size);
@@ -249,3 +249,5 @@ size_t StackHash (Stack_t* stack)
         }
     return hash;
     }
+
+//-------------------------------------------------------
