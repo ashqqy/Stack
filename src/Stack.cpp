@@ -7,16 +7,6 @@
 
 //-------------------------------------------------------
 
-#ifdef CANARY_PROTECTION
-#define $CANARY(param) + param
-
-#else
-#define $CANARY(param) + 0
-
-#endif //CANARIES
-
-//-------------------------------------------------------
-
 #define STACK_ASSERT(stack) StackAssert (stack, __FILE__, __LINE__);
 
 //-------------------------------------------------------
@@ -30,8 +20,15 @@ STACK_ERRORS StackInit (Stack_t* stack, size_t capacity)
     if (stack->data == NULL)
         return CANNOT_ALLOCATE_MEMORY;
 
+    stack->left_canary = CANARY;
     stack->size = 0;
     stack->capacity = capacity;
+    stack->right_canary = CANARY;
+
+    stack->data[0] = CANARY;
+    stack->data[capacity + 1] = CANARY;
+
+    stack->hash = StackHash (stack);
 
     STACK_ASSERT (stack);
 
@@ -51,6 +48,8 @@ STACK_ERRORS StackDestroy (Stack_t* stack)
     free(stack->data); stack->data = NULL;
 
     stack->size = 0; stack->capacity = 0;
+    stack->left_canary = 0; stack->right_canary = 0;
+    stack->hash = 0;
 
     return OK;
     }
@@ -61,9 +60,6 @@ STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push)
     {
     STACK_ASSERT (stack); // FIXME граничный элемент ядовитый
 
-    if (elem_push == 7)
-        printf ("%d\n", stack->data[stack->size]);
-
     if (stack->size == stack->capacity)
         {
         STACK_ERRORS resize_err = StackResize (stack, CAPACITY_GROWTH);
@@ -73,11 +69,7 @@ STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push)
 
     stack->data[stack->size++ + 1] = elem_push; // +1 из-за левой канарейки
 
-    if (elem_push == 7)
-        printf ("%d\n", stack->data[stack->size - 1]);
-
-    if (elem_push == 6)
-        printf ("%d\n", stack->data[stack->size]);
+    stack->hash = StackHash (stack);
 
     STACK_ASSERT (stack);
     
@@ -90,6 +82,9 @@ STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop)
     {
     STACK_ASSERT (stack);
 
+    if (stack->size == 0)
+        return BAD_POPa;
+
     if (stack->size <= stack->capacity * CAPACITY_DECREASE)
         {
         STACK_ERRORS resize_err = StackResize (stack, CAPACITY_DECREASE);
@@ -99,6 +94,8 @@ STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop)
 
     *elem_pop = stack->data[--stack->size + 1]; // +1 из-за левой канарейки
     stack->data[stack->size + 1] = STACK_POISON;
+
+    stack->hash = StackHash (stack);
 
     STACK_ASSERT (stack);
 
@@ -136,6 +133,16 @@ STACK_ERRORS StackOk (Stack_t* stack)
         return STACK_NEGATIVE_CAPACITY;
     if (stack->size > stack->capacity)
         return STACK_BAD_SIZE;
+    if (stack->left_canary != CANARY)  
+        return STACK_STRUCT_BAD_LEFT_CANARY;
+    if (stack->right_canary != CANARY)  
+        return STACK_STRUCT_BAD_RIGHT_CANARY;  
+    if (stack->data[0] != CANARY)  
+        return STACK_DATA_BAD_LEFT_CANARY;
+    if (stack->data[stack->capacity + 1] != CANARY)  
+        return STACK_DATA_BAD_RIGHT_CANARY;
+    if (stack->hash != StackHash (stack))
+        return STACK_BAD_HASH;
     return OK;
     }
 
@@ -144,7 +151,6 @@ STACK_ERRORS StackOk (Stack_t* stack)
 void StackAssert (Stack_t* stack, const char* file, int line) // TODO __func__
     {
     STACK_ERRORS stack_error = StackOk (stack);
-    // printf ("%d\n", stack_error);
     if (stack_error != OK)
         {
         printf ("%sERROR:%s %s %s \n", RED_COLOR, MAGENTA_COLOR, StackErrDescr (stack_error), DEFAULT_COLOR);
@@ -167,6 +173,12 @@ const char* StackErrDescr (STACK_ERRORS stack_error)
         $DESCR(STACK_NEGATIVE_SIZE);
         $DESCR(STACK_NEGATIVE_CAPACITY);
         $DESCR(CANNOT_ALLOCATE_MEMORY);
+        $DESCR(STACK_DATA_BAD_LEFT_CANARY);
+        $DESCR(STACK_DATA_BAD_RIGHT_CANARY);
+        $DESCR(STACK_STRUCT_BAD_LEFT_CANARY);
+        $DESCR(STACK_STRUCT_BAD_RIGHT_CANARY);
+        $DESCR(STACK_BAD_HASH);
+        $DESCR(BAD_POPa);
         default:
             return "u are fucking forgot some error (dumb)";
         }
@@ -187,8 +199,10 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
 
     printf ("Stack_t [0x%p] at %s:%d \n", stack, file, n_line);
     printf ("    { \n");
+    printf ("    left_canary (struct) = %d \n", stack->left_canary);
     printf ("    size = %d \n", stack->size);
     printf ("    capacity = %d \n", stack->capacity);
+    printf ("    hash = %d \n", stack->hash);
 
     if (stack->data == NULL)
         {
@@ -198,7 +212,7 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
     printf ("    data[0x%p]: \n", stack->data);
     printf ("        { \n");
 
-    printf ("        Left Canary = %d\n", stack->data[0]);
+    printf ("        left_canary (data) = %d\n", stack->data[0]);
 
     for (int i = 0; i < stack->capacity; i++)
         {
@@ -208,9 +222,10 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
             printf ("        [%d] = %d; \n", i, stack->data[i+1]);
         }
 
-    printf ("        Right Canary = %d\n", stack->data[stack->capacity + 1]);
+    printf ("        right_canary (data) = %d\n", stack->data[stack->capacity + 1]);
 
     printf ("        } \n");
+    printf ("    right_canary (struct) = %d \n", stack->right_canary);
     printf ("    } \n");
 
     #undef $PRINTERROR
@@ -218,3 +233,8 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
     }
 
 //-------------------------------------------------------
+
+size_t StackHash (Stack_t* stack)
+    {
+    return 0;
+    }
