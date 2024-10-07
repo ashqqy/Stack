@@ -202,7 +202,7 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
     printf ("    left_canary (struct) = %d \n", stack->left_canary);
     printf ("    size = %d \n", stack->size);
     printf ("    capacity = %d \n", stack->capacity);
-    printf ("    hash = %d \n", stack->hash);
+    printf ("    hash = %llu \n", stack->hash);
 
     if (stack->data == NULL)
         {
@@ -236,5 +236,16 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line)
 
 size_t StackHash (Stack_t* stack)
     {
-    return 0;
+    size_t hash = 5381;
+    hash = ((hash << 5) + hash) + stack->left_canary;
+    hash = ((hash << 5) + hash) + stack->size;
+    hash = ((hash << 5) + hash) + stack->capacity;
+    hash = ((hash << 5) + hash) + stack->right_canary;
+
+    for (int i = 0; i < stack->capacity; i++)
+        {
+        size_t hash_element = stack->data[i];
+        hash = ((hash << 5) + hash) + hash_element;
+        }
+    return hash;
     }
