@@ -8,13 +8,6 @@
 typedef int StackElem_t;
 typedef unsigned long long Canary_t;
 
-struct Stack_t
-    {
-    ssize_t size;
-    ssize_t capacity;
-    StackElem_t* data;
-    };
-
 //-------------------------------------------------------
 
 const double CAPACITY_GROWTH = 2;
@@ -27,6 +20,18 @@ const Canary_t CANARY = 123456789;
 
 //-------------------------------------------------------
 
+struct Stack_t
+    {
+    Canary_t left_canary;
+    ssize_t size;
+    ssize_t capacity;
+    size_t hash;
+    StackElem_t* data;
+    Canary_t right_canary;
+    };
+
+//-------------------------------------------------------
+
 enum STACK_ERRORS
     {
     OK = 1,
@@ -35,7 +40,13 @@ enum STACK_ERRORS
     STACK_BAD_SIZE = 103, 
     STACK_NEGATIVE_SIZE = 104,
     STACK_NEGATIVE_CAPACITY = 105,
-    CANNOT_ALLOCATE_MEMORY = 106
+    CANNOT_ALLOCATE_MEMORY = 106,
+    STACK_DATA_BAD_LEFT_CANARY = 107,
+    STACK_DATA_BAD_RIGHT_CANARY = 108,
+    STACK_STRUCT_BAD_LEFT_CANARY = 109,
+    STACK_STRUCT_BAD_RIGHT_CANARY = 110,
+    STACK_BAD_HASH = 111,
+    BAD_POPa = 112
     };
 
 //-------------------------------------------------------
@@ -57,6 +68,8 @@ STACK_ERRORS StackOk (Stack_t* stack);
 const char* StackErrDescr (STACK_ERRORS stack_error);
 void StackAssert (Stack_t* stack, const char* file, int line);
 STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line);
+
+size_t StackHash (Stack_t* stack);
 
 //-------------------------------------------------------
 
