@@ -46,6 +46,11 @@ void* MyRecalloc (void* memory, size_t n_elements, size_t size_elements, size_t 
         for (int i = 0; i < n_elements - previous_n_elements; i++)
             memcpy(((char*) memory + (previous_n_elements + i) * size_elements), poison, size_elements);
 
+    /// Если уменьшаем блок памяти, то удаленные ячейки обнуляем
+    if (previous_n_elements > n_elements)
+        for (int i = 0; i < previous_n_elements - n_elements; i++)
+            memset ((char*) memory + n_elements * size_elements, 0, size_elements);
+
     return memory;
     }
 

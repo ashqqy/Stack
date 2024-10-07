@@ -66,8 +66,8 @@ STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef);
 
 STACK_ERRORS StackOk (Stack_t* stack);
 const char* StackErrDescr (STACK_ERRORS stack_error);
-void StackAssert (Stack_t* stack, const char* file, int line);
-STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line);
+void StackAssert (Stack_t* stack, const char* file, int line, const char* func);
+STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char* func);
 
 size_t StackHash (Stack_t* stack);
 
