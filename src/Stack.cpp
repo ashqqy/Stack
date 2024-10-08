@@ -100,7 +100,6 @@ STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop)
         }
 
     *elem_pop = stack->data[--stack->size + 1]; // +1 из-за левой канарейки
-    stack->data[stack->size + 1] = STACK_POISON;
 
     stack->hash = StackHash (stack);
 
