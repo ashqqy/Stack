@@ -2,6 +2,7 @@
 
 #include "MyAllocation.h"
 
+#include <stdlib.h>
 #include <assert.h>
 
 //-------------------------------------------------------
@@ -16,7 +17,7 @@ void* MyCalloc (size_t n_elems, size_t size_elems, void* poison)
     {
     void* mem_ptr = calloc (n_elems, size_elems);
     for (int i = 0; i < n_elems; i++)
-        memcpy (mem_ptr, poison, size_elems);
+        memcpy ((char*) mem_ptr + i * size_elems, poison, size_elems);
     return mem_ptr;
     }
 
