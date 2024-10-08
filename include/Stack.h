@@ -16,7 +16,7 @@ const double CAPACITY_DECREASE = 1 / (CAPACITY_GROWTH * 2);
 const StackElem_t STACK_POISON = 666;
 
 const int N_CANARIES = 2;
-const Canary_t CANARY = 123456789;
+const Canary_t CANARY = 0xBEB1A; // Canary_t не задействован
 
 //-------------------------------------------------------
 
@@ -36,17 +36,22 @@ enum STACK_ERRORS
     {
     OK = 1,
     STACK_BAD_STRUCT = 101,
-    STACK_BAD_DATA = 102, 
-    STACK_BAD_SIZE = 103, 
-    STACK_NEGATIVE_SIZE = 104,
+    STACK_BAD_DATA =   102, 
+    STACK_BAD_SIZE =   103, 
+    STACK_NEGATIVE_SIZE =     104,
     STACK_NEGATIVE_CAPACITY = 105,
+
     CANNOT_ALLOCATE_MEMORY = 106,
-    STACK_DATA_BAD_LEFT_CANARY = 107,
-    STACK_DATA_BAD_RIGHT_CANARY = 108,
-    STACK_STRUCT_BAD_LEFT_CANARY = 109,
+
+    STACK_DATA_BAD_LEFT_CANARY =    107,
+    STACK_DATA_BAD_RIGHT_CANARY =   108,
+    STACK_STRUCT_BAD_LEFT_CANARY =  109,
     STACK_STRUCT_BAD_RIGHT_CANARY = 110,
-    STACK_BAD_HASH = 111,
-    BAD_POPa = 112
+
+    STACK_CANNOT_CREATE_HASH = 111,
+    STACK_BAD_HASH = 112,
+
+    BAD_POPa = 113
     };
 
 //-------------------------------------------------------
@@ -57,7 +62,7 @@ const char* const DEFAULT_COLOR = "\033[1;0m";
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackInit (Stack_t* stack, size_t capacity = 0);
+STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity = 0);
 STACK_ERRORS StackDestroy (Stack_t* stack);
 
 STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push);

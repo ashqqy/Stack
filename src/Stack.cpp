@@ -11,10 +11,17 @@
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackInit (Stack_t* stack, size_t capacity)
+STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity) 
+//FIXME если бы не канарейки, то capacity=0 * size_coef = 0
     {
     if (stack == NULL)
         return STACK_BAD_STRUCT;
+
+    if (capacity < NULL)
+        {
+        stack->capacity = capacity;
+        return STACK_NEGATIVE_CAPACITY;
+        }
 
     stack->data = (StackElem_t*) MyCalloc (capacity + N_CANARIES, sizeof (StackElem_t), (void*) &STACK_POISON);
     if (stack->data == NULL)
@@ -125,12 +132,12 @@ STACK_ERRORS StackOk (Stack_t* stack)
     {
     if (stack == NULL)
         return STACK_BAD_STRUCT;
-    if (stack->data == NULL)
-        return STACK_BAD_DATA;
     if (stack->size < NULL)
         return STACK_NEGATIVE_SIZE;
     if (stack->capacity < NULL)
         return STACK_NEGATIVE_CAPACITY;
+    if (stack->data == NULL)
+        return STACK_BAD_DATA;
     if (stack->size > stack->capacity)
         return STACK_BAD_SIZE;
     if (stack->left_canary != CANARY)  
@@ -237,12 +244,19 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char
 size_t StackHash (Stack_t* stack)
     {
     size_t hash = 5381;
+
+    if (stack == NULL)
+        return hash;
+
     hash = ((hash << 5) + hash) + stack->left_canary;
     hash = ((hash << 5) + hash) + stack->size;
     hash = ((hash << 5) + hash) + stack->capacity;
     hash = ((hash << 5) + hash) + stack->right_canary;
 
-    for (int i = 0; i < stack->capacity; i++)
+    if (stack->data == NULL)
+        return hash;
+
+    for (int i = 0; i < stack->capacity + N_CANARIES; i++)
         {
         size_t hash_element = stack->data[i];
         hash = ((hash << 5) + hash) + hash_element;

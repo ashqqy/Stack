@@ -2,6 +2,7 @@
 
 #include "MyAllocation.h"
 
+#include <stdlib.h>
 #include <assert.h>
 
 //-------------------------------------------------------
