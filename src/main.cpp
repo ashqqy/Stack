@@ -3,8 +3,6 @@
 #include <assert.h>
 #include <string.h>
 
-// TODO #define CANARY_PROTECTION and #define HASH_PROTECTION
-
 #include "MyAllocation.h"
 #include "Stack.h"
 
@@ -13,21 +11,14 @@
 int main ()
     {
     Stack_t stack = {};
-    StackInit (&stack, 0);
-    StackPush (&stack, 0);
-    StackPush (&stack, 1);
-    StackPush (&stack, 2);
-    StackPush (&stack, 3);
-    StackPush (&stack, 4);
-    StackPush (&stack, 5);
-    StackPush (&stack, 6);
-    StackPush (&stack, 7);
-    StackPush (&stack, 8);
-    StackPush (&stack, 9);
-    StackPush (&stack, 10);
-    StackPush (&stack, 11);
-    StackPush (&stack, 12);
-    StackPush (&stack, 13);
+    StackInit (&stack, 1);
+
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+
+    StackElem_t elem_push = 0;
+    StackPop (&stack, &elem_push);
 
     StackDump (&stack, __FILE__, __LINE__, __func__);
 

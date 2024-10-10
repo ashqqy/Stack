@@ -1,9 +1,14 @@
 #include <stdio.h>
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "Stack.h"
 #include "MyAllocation.h"
+
+//-------------------------------------------------------
+
+// TODO #define CANARY_PROTECTION and #define HASH_PROTECTION (условная компиляция)
 
 //-------------------------------------------------------
 
@@ -12,12 +17,11 @@
 //-------------------------------------------------------
 
 STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity) 
-//FIXME если бы не канарейки, то capacity=0 * size_coef = 0
     {
     if (stack == NULL)
         return STACK_BAD_STRUCT;
 
-    if (capacity < NULL)
+    if (capacity < 0)
         {
         stack->capacity = capacity;
         return STACK_NEGATIVE_CAPACITY;
@@ -100,6 +104,7 @@ STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop)
         }
 
     *elem_pop = stack->data[--stack->size + 1]; // +1 из-за левой канарейки
+    stack->data[stack->size + 1] = STACK_POISON;
 
     stack->hash = StackHash (stack);
 
@@ -112,12 +117,21 @@ STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop)
 
 STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef)
     {
-    stack->data = (StackElem_t*) MyRecalloc (stack->data, (int) stack->capacity * new_size_coef + N_CANARIES, 
-                                             sizeof (StackElem_t), stack->capacity + N_CANARIES - 1, (void*) &STACK_POISON);
+    if (stack->capacity == 0)
+        {
+        stack->data = (StackElem_t*) MyRecalloc (stack->data, 1 + N_CANARIES, sizeof (StackElem_t), 
+                                                 stack->capacity + N_CANARIES - 1, (void*) &STACK_POISON);
+        stack->capacity = 1;
+        }
+    else
+        {
+        stack->data = (StackElem_t*) MyRecalloc (stack->data, (int) stack->capacity * new_size_coef + N_CANARIES, 
+                                                 sizeof (StackElem_t), stack->capacity + N_CANARIES - 1, (void*) &STACK_POISON);
+        stack->capacity = (int) stack->capacity * new_size_coef;
+        }
+
     if (stack->data == NULL)
         return CANNOT_ALLOCATE_MEMORY;           
-
-    stack->capacity = (int) stack->capacity * new_size_coef;
 
     stack->data[0] = CANARY;
     stack->data[stack->capacity + 1] = CANARY; // +1 из-за левой канарейки
@@ -129,26 +143,17 @@ STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef)
 
 STACK_ERRORS StackOk (Stack_t* stack)
     {
-    if (stack == NULL)
-        return STACK_BAD_STRUCT;
-    if (stack->size < NULL)
-        return STACK_NEGATIVE_SIZE;
-    if (stack->capacity < NULL)
-        return STACK_NEGATIVE_CAPACITY;
-    if (stack->data == NULL)
-        return STACK_BAD_DATA;
-    if (stack->size > stack->capacity)
-        return STACK_BAD_SIZE;
-    if (stack->left_canary != CANARY)  
-        return STACK_STRUCT_BAD_LEFT_CANARY;
-    if (stack->right_canary != CANARY)  
-        return STACK_STRUCT_BAD_RIGHT_CANARY;  
-    if (stack->data[0] != CANARY)  
-        return STACK_DATA_BAD_LEFT_CANARY;
-    if (stack->data[stack->capacity + 1] != CANARY)  
-        return STACK_DATA_BAD_RIGHT_CANARY;
-    if (stack->hash != StackHash (stack))
-        return STACK_BAD_HASH;
+    if (stack == NULL)                                return STACK_BAD_STRUCT;
+    if (stack->size < 0)                              return STACK_NEGATIVE_SIZE;
+    if (stack->capacity < 0)                          return STACK_NEGATIVE_CAPACITY;
+    if (stack->data == NULL)                          return STACK_BAD_DATA;
+    if (stack->size > stack->capacity)                return STACK_BAD_SIZE;
+    if (stack->left_canary != CANARY)                 return STACK_STRUCT_BAD_LEFT_CANARY;
+    if (stack->right_canary != CANARY)                return STACK_STRUCT_BAD_RIGHT_CANARY;  
+    if (stack->data[0] != CANARY)                     return STACK_DATA_BAD_LEFT_CANARY;
+    if (stack->data[stack->capacity + 1] != CANARY)   return STACK_DATA_BAD_RIGHT_CANARY;
+    if (stack->hash != StackHash (stack))             return STACK_BAD_HASH;
+
     return OK;
     }
 
@@ -173,6 +178,7 @@ const char* StackErrDescr (STACK_ERRORS stack_error)
 
     switch (stack_error)
         {
+        $DESCR(OK);
         $DESCR(STACK_BAD_STRUCT);
         $DESCR(STACK_BAD_DATA);
         $DESCR(STACK_BAD_SIZE);
@@ -205,10 +211,10 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char
 
     printf ("Stack_t [0x%p] at %s:%d (%s)\n", stack, file, n_line, func);
     printf ("    { \n");
-    printf ("    left_canary (struct) = %d \n", stack->left_canary);
+    printf ("    left_canary (struct) = 0x%X \n", stack->left_canary);
     printf ("    size = %d \n", stack->size);
     printf ("    capacity = %d \n", stack->capacity);
-    printf ("    hash = %llu \n", stack->hash);
+    printf ("    hash = 0x%X \n", stack->hash);
 
     if (stack->data == NULL)
         {
@@ -218,7 +224,7 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char
     printf ("    data[0x%p]: \n", stack->data);
     printf ("        { \n");
 
-    printf ("        left_canary (data) = %d\n", stack->data[0]);
+    printf ("        left_canary (data) = 0x%X\n", stack->data[0]);
 
     for (int i = 0; i < stack->capacity; i++)
         {
@@ -228,10 +234,10 @@ STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char
             printf ("        [%d] = %d; \n", i, stack->data[i+1]);
         }
 
-    printf ("        right_canary (data) = %d\n", stack->data[stack->capacity + 1]);
+    printf ("        right_canary (data) = 0x%X\n", stack->data[stack->capacity + 1]);
 
     printf ("        } \n");
-    printf ("    right_canary (struct) = %d \n", stack->right_canary);
+    printf ("    right_canary (struct) = 0x%X \n", stack->right_canary);
     printf ("    } \n");
 
     #undef $PRINTERROR
@@ -247,19 +253,29 @@ size_t StackHash (Stack_t* stack)
     if (stack == NULL)
         return hash;
 
-    hash = ((hash << 5) + hash) + stack->left_canary;
-    hash = ((hash << 5) + hash) + stack->size;
-    hash = ((hash << 5) + hash) + stack->capacity;
-    hash = ((hash << 5) + hash) + stack->right_canary;
+    // обнуляем хеш в структуре, чтобы он не хешировался
+    size_t old_hash = stack->hash;
+    stack->hash = 0;
+
+    // считаем хеш для структуры
+    for (int i = 0; i < sizeof (Stack_t); i++)
+        {
+        size_t hash_element = (char) *((char*) stack + i);
+        hash = ((hash << 5) + hash) + hash_element;
+        }
+    
+    stack->hash = old_hash;
 
     if (stack->data == NULL)
         return hash;
 
+    // считаем хеш для буфера
     for (int i = 0; i < stack->capacity + N_CANARIES; i++)
         {
         size_t hash_element = stack->data[i];
         hash = ((hash << 5) + hash) + hash_element;
         }
+
     return hash;
     }
 
