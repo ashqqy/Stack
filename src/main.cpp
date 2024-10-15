@@ -16,11 +16,19 @@ int main ()
     StackPush (&stack, 133);
     StackPush (&stack, 133);
     StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
+    StackPush (&stack, 133);
 
-    StackElem_t elem_push = 0;
-    StackPop (&stack, &elem_push);
+    StackElem_t elem_pop = StackPop (&stack);
 
-    StackDump (&stack, __FILE__, __LINE__, __func__);
+    STACKDUMP (&stack, stdout);
 
     StackDestroy (&stack);
     }
