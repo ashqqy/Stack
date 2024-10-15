@@ -57,7 +57,7 @@ const char* const DEFAULT_COLOR = "\033[1;0m";
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity = 0);
+STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity = 10);
 STACK_ERRORS StackDestroy (Stack_t* stack);
 
 STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push);
