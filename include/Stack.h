@@ -61,7 +61,7 @@ STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity = 10);
 STACK_ERRORS StackDestroy (Stack_t* stack);
 
 STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push);
-STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop);
+StackElem_t StackPop (Stack_t* stack);
 STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef);
 
 STACK_ERRORS StackOk (Stack_t* stack);

@@ -89,28 +89,30 @@ STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push)
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackPop (Stack_t* stack, StackElem_t* elem_pop)
+// Нет проверки на ошибки для удобства использования
+// Если ошибка, то возвращается ядовитое значение
+StackElem_t StackPop (Stack_t* stack)
     {
     STACK_ASSERT (stack);
 
     if (stack->size == 0)
-        return BAD_POPa;
+        return STACK_POISON;
 
     if (stack->size <= stack->capacity * CAPACITY_DECREASE)
         {
         STACK_ERRORS resize_err = StackResize (stack, CAPACITY_DECREASE);
         if (resize_err != OK)
-            return resize_err;
+            return STACK_POISON;
         }
 
-    *elem_pop = stack->data[--stack->size + 1]; // +1 из-за левой канарейки
+    StackElem_t elem_pop = stack->data[--stack->size + 1]; // +1 из-за левой канарейки
     stack->data[stack->size + 1] = STACK_POISON;
 
     stack->hash = StackHash (stack);
 
     STACK_ASSERT (stack);
 
-    return OK;
+    return elem_pop;
     }
 
 //-------------------------------------------------------
