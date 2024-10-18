@@ -27,6 +27,9 @@ STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity)
         return STACK_NEGATIVE_CAPACITY;
         }
 
+    if (capacity < MIN_CAPACITY)
+        capacity = MIN_CAPACITY;
+
     stack->data = (StackElem_t*) MyCalloc (capacity + N_CANARIES, sizeof (StackElem_t), (void*) &STACK_POISON);
     if (stack->data == NULL)
         return CANNOT_ALLOCATE_MEMORY;
@@ -71,7 +74,7 @@ STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push)
     {
     STACK_ASSERT (stack);
 
-    if (stack->size == stack->capacity)
+    if ( (stack->size == stack->capacity) && (stack->size >= MIN_CAPACITY) )
         {
         STACK_ERRORS resize_err = StackResize (stack, CAPACITY_GROWTH);
         if (resize_err != OK)
@@ -98,7 +101,7 @@ StackElem_t StackPop (Stack_t* stack)
     if (stack->size == 0)
         return STACK_POISON;
 
-    if (stack->size <= stack->capacity * CAPACITY_DECREASE)
+    if ( (stack->size <= stack->capacity * CAPACITY_DECREASE) && (stack->size >= MIN_CAPACITY) )
         {
         STACK_ERRORS resize_err = StackResize (stack, CAPACITY_DECREASE);
         if (resize_err != OK)

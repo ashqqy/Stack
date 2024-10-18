@@ -9,6 +9,8 @@ typedef int StackElem_t;
 
 //-------------------------------------------------------
 
+const int MIN_CAPACITY = 10;
+
 const double CAPACITY_GROWTH = 2;
 const double CAPACITY_DECREASE = 1 / (CAPACITY_GROWTH * 2);
 
