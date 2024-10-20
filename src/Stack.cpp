@@ -170,7 +170,7 @@ void StackAssert (Stack_t* stack, const char* file, int line, const char* func)
     if (stack_error != OK)
         {
         printf ("%sERROR:%s %s %s \n", RED_COLOR, MAGENTA_COLOR, StackErrDescr (stack_error), DEFAULT_COLOR);
-        StackDump (stack, file, line, func);
+        StackDump (stack, stdout, file, line, func);
         assert ("StackOk" && !OK);
         }
     }
@@ -205,45 +205,45 @@ const char* StackErrDescr (STACK_ERRORS stack_error)
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char* func)
+STACK_ERRORS StackDump (Stack_t* stack, FILE* dump_file, const char* file, int n_line, const char* func)
     {
-    #define $PRINTERROR(error) printf ("%s" #error " (DUMP) %s \n", MAGENTA_COLOR, DEFAULT_COLOR); return error;
+    #define $PRINTERROR(error, dump_file) fprintf (dump_file, "%s" #error " (DUMP) %s \n", MAGENTA_COLOR, DEFAULT_COLOR); return error;
 
     if (stack == NULL)
         {
-        $PRINTERROR (STACK_BAD_STRUCT);
+        $PRINTERROR (STACK_BAD_STRUCT, dump_file);
         }
 
-    printf ("Stack_t [0x%p] at %s:%d (%s)\n", stack, file, n_line, func);
-    printf ("    { \n");
-    printf ("    left_canary (struct) = 0x%X \n", stack->left_canary);
-    printf ("    size = %d \n", stack->size);
-    printf ("    capacity = %d \n", stack->capacity);
-    printf ("    hash = 0x%X \n", stack->hash);
+    fprintf (dump_file, "Stack_t [0x%p] at %s:%d (%s)\n", stack, file, n_line, func);
+    fprintf (dump_file, "    { \n");
+    fprintf (dump_file,"    left_canary (struct) = 0x%X \n", stack->left_canary);
+    fprintf (dump_file, "    size = %d \n", stack->size);
+    fprintf (dump_file, "    capacity = %d \n", stack->capacity);
+    fprintf (dump_file,"    hash = 0x%X \n", stack->hash);
 
     if (stack->data == NULL)
         {
-        $PRINTERROR (STACK_BAD_DATA);
+        $PRINTERROR (STACK_BAD_DATA, dump_file);
         }
 
-    printf ("    data[0x%p]: \n", stack->data);
-    printf ("        { \n");
+    fprintf (dump_file, "    data[0x%p]: \n", stack->data);
+    fprintf (dump_file, "        { \n");
 
-    printf ("        left_canary (data) = 0x%X\n", stack->data[0]);
+    fprintf (dump_file, "        left_canary (data) = 0x%X\n", stack->data[0]);
 
     for (int i = 0; i < stack->capacity; i++)
         {
         if (i < stack->size)
-            printf ("        *[%d] = %d; \n", i, stack->data[i+1]);
+            fprintf (dump_file, "        *[%d] = %d; \n", i, stack->data[i+1]);
         else 
-            printf ("        [%d] = %d; \n", i, stack->data[i+1]);
+            fprintf (dump_file, "        [%d] = %d; \n", i, stack->data[i+1]);
         }
 
-    printf ("        right_canary (data) = 0x%X\n", stack->data[stack->capacity + 1]);
+    fprintf (dump_file, "        right_canary (data) = 0x%X\n", stack->data[stack->capacity + 1]);
 
-    printf ("        } \n");
-    printf ("    right_canary (struct) = 0x%X \n", stack->right_canary);
-    printf ("    } \n");
+    fprintf (dump_file, "        } \n");
+    fprintf (dump_file, "    right_canary (struct) = 0x%X \n", stack->right_canary);
+    fprintf (dump_file, "    } \n");
 
     #undef $PRINTERROR
     return OK;

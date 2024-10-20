@@ -5,6 +5,10 @@
 
 //-------------------------------------------------------
 
+#define STACKDUMP(stack, dump_file) StackDump (stack, dump_file, __FILE__, __LINE__, __func__);
+
+//-------------------------------------------------------
+
 typedef int StackElem_t;
 
 //-------------------------------------------------------
@@ -69,7 +73,7 @@ STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef);
 STACK_ERRORS StackOk (Stack_t* stack);
 const char* StackErrDescr (STACK_ERRORS stack_error);
 void StackAssert (Stack_t* stack, const char* file, int line, const char* func);
-STACK_ERRORS StackDump (Stack_t* stack, const char* file, int n_line, const char* func);
+STACK_ERRORS StackDump (Stack_t* stack, FILE* dump_file, const char* file, int n_line, const char* func);
 
 size_t StackHash (Stack_t* stack);
 
