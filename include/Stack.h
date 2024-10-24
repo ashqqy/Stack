@@ -15,8 +15,8 @@ typedef int StackElem_t;
 
 const int MIN_CAPACITY = 10;
 
-const double CAPACITY_GROWTH = 2;
-const double CAPACITY_DECREASE = 1 / (CAPACITY_GROWTH * 2);
+const int CAPACITY_GROWTH   = 2;
+const int CAPACITY_DECREASE = 2 * CAPACITY_GROWTH;
 
 const StackElem_t STACK_POISON = 666;
 
@@ -68,7 +68,7 @@ STACK_ERRORS StackDestroy (Stack_t* stack);
 
 STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push);
 StackElem_t StackPop (Stack_t* stack);
-STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef);
+STACK_ERRORS StackResize (Stack_t* stack, ssize_t new_size);
 
 STACK_ERRORS StackOk (Stack_t* stack);
 const char* StackErrDescr (STACK_ERRORS stack_error);

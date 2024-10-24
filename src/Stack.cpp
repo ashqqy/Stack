@@ -30,7 +30,7 @@ STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity)
     if (capacity < MIN_CAPACITY)
         capacity = MIN_CAPACITY;
 
-    stack->data = (StackElem_t*) MyCalloc (capacity + N_CANARIES, sizeof (StackElem_t), (void*) &STACK_POISON);
+    stack->data = (StackElem_t*) MyCalloc (capacity + N_CANARIES, sizeof (StackElem_t), (const void*) &STACK_POISON);
     if (stack->data == NULL)
         return CANNOT_ALLOCATE_MEMORY;
 
@@ -76,7 +76,7 @@ STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push)
 
     if ( (stack->size == stack->capacity) && (stack->size >= MIN_CAPACITY) )
         {
-        STACK_ERRORS resize_err = StackResize (stack, CAPACITY_GROWTH);
+        STACK_ERRORS resize_err = StackResize (stack, stack->capacity * CAPACITY_GROWTH);
         if (resize_err != OK)
             return resize_err;
         }
@@ -101,9 +101,9 @@ StackElem_t StackPop (Stack_t* stack)
     if (stack->size == 0)
         return STACK_POISON;
 
-    if ( (stack->size <= stack->capacity * CAPACITY_DECREASE) && (stack->size >= MIN_CAPACITY) )
+    if ( (stack->size <= stack->capacity / CAPACITY_DECREASE) && (stack->size >= MIN_CAPACITY) )
         {
-        STACK_ERRORS resize_err = StackResize (stack, CAPACITY_DECREASE);
+        STACK_ERRORS resize_err = StackResize (stack, stack->capacity / CAPACITY_DECREASE);
         if (resize_err != OK)
             return STACK_POISON;
         }
@@ -120,19 +120,19 @@ StackElem_t StackPop (Stack_t* stack)
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackResize (Stack_t* stack, const double new_size_coef)
+STACK_ERRORS StackResize (Stack_t* stack, ssize_t new_size)
     {
     if (stack->capacity == 0)
         {
         stack->data = (StackElem_t*) MyRecalloc (stack->data, 1 + N_CANARIES, sizeof (StackElem_t), 
-                                                 stack->capacity + N_CANARIES - 1, (void*) &STACK_POISON);
+                                                 stack->capacity + N_CANARIES - 1, (const void*) &STACK_POISON);
         stack->capacity = 1;
         }
     else
         {
-        stack->data = (StackElem_t*) MyRecalloc (stack->data, (int) stack->capacity * new_size_coef + N_CANARIES, 
-                                                 sizeof (StackElem_t), stack->capacity + N_CANARIES - 1, (void*) &STACK_POISON);
-        stack->capacity = (int) stack->capacity * new_size_coef;
+        stack->data = (StackElem_t*) MyRecalloc (stack->data, new_size + N_CANARIES, 
+                                                 sizeof (StackElem_t), stack->capacity + N_CANARIES - 1, (const void*) &STACK_POISON);
+        stack->capacity = new_size;
         }
 
     if (stack->data == NULL)
@@ -195,6 +195,7 @@ const char* StackErrDescr (STACK_ERRORS stack_error)
         $DESCR(STACK_STRUCT_BAD_LEFT_CANARY);
         $DESCR(STACK_STRUCT_BAD_RIGHT_CANARY);
         $DESCR(STACK_BAD_HASH);
+        $DESCR(STACK_CANNOT_CREATE_HASH);
         $DESCR(BAD_POPa);
         default:
             return "u are fucking forgot some error (dumb)";
@@ -216,10 +217,10 @@ STACK_ERRORS StackDump (Stack_t* stack, FILE* dump_file, const char* file, int n
 
     fprintf (dump_file, "Stack_t [0x%p] at %s:%d (%s)\n", stack, file, n_line, func);
     fprintf (dump_file, "    { \n");
-    fprintf (dump_file,"    left_canary (struct) = 0x%X \n", stack->left_canary);
-    fprintf (dump_file, "    size = %d \n", stack->size);
-    fprintf (dump_file, "    capacity = %d \n", stack->capacity);
-    fprintf (dump_file,"    hash = 0x%X \n", stack->hash);
+    fprintf (dump_file, "    left_canary (struct) = 0x%X \n", stack->left_canary);
+    fprintf (dump_file, "    size = %lld \n", stack->size);
+    fprintf (dump_file, "    capacity = %lld \n", stack->capacity);
+    fprintf (dump_file, "    hash = 0x%llX \n", stack->hash);
 
     if (stack->data == NULL)
         {
@@ -263,7 +264,7 @@ size_t StackHash (Stack_t* stack)
     stack->hash = 0;
 
     // считаем хеш для структуры
-    for (int i = 0; i < sizeof (Stack_t); i++)
+    for (size_t i = 0; i < sizeof (Stack_t); i++)
         {
         size_t hash_element = (char) *((char*) stack + i);
         hash = ((hash << 5) + hash) + hash_element;
