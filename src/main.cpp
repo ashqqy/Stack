@@ -10,8 +10,8 @@
 
 int main ()
     {
-    Stack_t stack = {};
-    StackInit (&stack, 1);
+    stack_t stack = {};
+    StackInit (&stack);
 
     StackPush (&stack, 133);
     StackPush (&stack, 133);
@@ -26,7 +26,8 @@ int main ()
     StackPush (&stack, 133);
     StackPush (&stack, 133);
 
-    StackElem_t elem_pop = StackPop (&stack);
+    stack_elem_t elem_pop = 0;
+    StackPop (&stack, &elem_pop);
 
     STACKDUMP (&stack, stdout);
 
