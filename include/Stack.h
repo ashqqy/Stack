@@ -7,9 +7,30 @@
 
 #define STACKDUMP(stack, dump_file) StackDump (stack, dump_file, __FILE__, __LINE__, __func__);
 
+#define CANARY_PROTECTION
+#define HASH_PROTECTION
+#define POISON_PROTECTION
+
+#ifdef CANARY_PROTECTION
+#define CANARY(...) __VA_ARGS__
+#else
+#define CANARY(...)
+#endif // CANARY_PROTECTION
+
+#ifdef HASH_PROTECTION
+#define HASH(...) __VA_ARGS__
+#else
+#define HASH(...)
+#endif // HASH_PPROTECTION
+
+#ifdef POISON_PROTECTION
+#define POISON(...) __VA_ARGS__
+#else
+#define POISON(...) 0
+#endif // POISON_PROTECTION
 //-------------------------------------------------------
 
-typedef int StackElem_t;
+typedef int stack_elem_t;
 
 //-------------------------------------------------------
 
@@ -18,28 +39,28 @@ const int MIN_CAPACITY = 10;
 const int CAPACITY_GROWTH   = 2;
 const int CAPACITY_DECREASE = 2 * CAPACITY_GROWTH;
 
-const StackElem_t STACK_POISON = 666;
+const stack_elem_t STACK_POISON = POISON(666);
 
-const int N_CANARIES = 2;
-const StackElem_t CANARY = 0xBEB1A;
+CANARY(const int N_CANARIES = 2;)
+CANARY(const stack_elem_t STACK_CANARY = 0xBEB1A;)
 
 //-------------------------------------------------------
 
-struct Stack_t
+struct stack_t
     {
-    StackElem_t left_canary;
+    CANARY(stack_elem_t left_canary;)
     ssize_t size;
     ssize_t capacity;
-    size_t hash;
-    StackElem_t* data;
-    StackElem_t right_canary;
+    HASH(size_t hash;)
+    stack_elem_t* data;
+    CANARY(stack_elem_t right_canary;)
     };
 
 //-------------------------------------------------------
 
-enum STACK_ERRORS
+enum stack_error_t
     {
-    OK =                            1,
+    STACK_OK =                      1,
     STACK_BAD_STRUCT =              101,
     STACK_BAD_DATA =                102, 
     STACK_BAD_SIZE =                103, 
@@ -63,19 +84,19 @@ const char* const DEFAULT_COLOR = "\033[1;0m";
 
 //-------------------------------------------------------
 
-STACK_ERRORS StackInit (Stack_t* stack, ssize_t capacity = 10);
-STACK_ERRORS StackDestroy (Stack_t* stack);
+stack_error_t StackInit (stack_t* stack, ssize_t capacity = 10);
+stack_error_t StackDestroy (stack_t* stack);
 
-STACK_ERRORS StackPush (Stack_t* stack, StackElem_t elem_push);
-StackElem_t StackPop (Stack_t* stack);
-STACK_ERRORS StackResize (Stack_t* stack, ssize_t new_size);
+stack_error_t StackPush (stack_t* stack, stack_elem_t elem_push);
+stack_error_t StackPop (stack_t* stack, stack_elem_t* elem_pop);
+stack_error_t StackResize (stack_t* stack, ssize_t new_size);
 
-STACK_ERRORS StackOk (Stack_t* stack);
-const char* StackErrDescr (STACK_ERRORS stack_error);
-void StackAssert (Stack_t* stack, const char* file, int line, const char* func);
-STACK_ERRORS StackDump (Stack_t* stack, FILE* dump_file, const char* file, int n_line, const char* func);
+stack_error_t StackOk (stack_t* stack);
+const char* StackErrDescr (stack_error_t stack_error);
+void StackAssert (stack_t* stack, const char* file, int line, const char* func);
+stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int n_line, const char* func);
 
-size_t StackHash (Stack_t* stack);
+size_t StackHash (stack_t* stack);
 
 //-------------------------------------------------------
 
