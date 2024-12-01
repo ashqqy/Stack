@@ -5,6 +5,7 @@
 
 #include "Stack.h"
 #include "MyAllocation.h"
+#include "Tree.h"
 
 //-------------------------------------------------------
 
@@ -230,9 +231,9 @@ stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int 
     for (int i = 0; i < stack->capacity; i++)
         {
         if (i < stack->size)
-            fprintf (dump_file, "        *[%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
+            fprintf (dump_file, "        *[%d] = %p; \n", i, stack->data[i CANARY(+ 1)]);
         else 
-            fprintf (dump_file, "        [%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
+            fprintf (dump_file, "         [%d] = %p; \n", i, stack->data[i CANARY(+ 1)]);
         }
 
     CANARY(fprintf (dump_file, "        right_canary (data) = 0x%X\n", (unsigned int) stack->data[stack->capacity + 1]);)
