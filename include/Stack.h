@@ -2,7 +2,11 @@
 #define MY_STACK
 
 #include <stdio.h>
+<<<<<<< HEAD
 #include "Common.h"
+=======
+#include "Tree.h"
+>>>>>>> 3d34d5a (Stack for Akinator)
 
 //-------------------------------------------------------
 

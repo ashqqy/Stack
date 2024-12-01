@@ -290,6 +290,7 @@ size_t StackHash (stack_t* stack)
 #include "Common.h"
 #include "Stack.h"
 #include "MyAllocation.h"
+#include "Tree.h"
 
 //-------------------------------------------------------
 
