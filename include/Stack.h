@@ -2,14 +2,15 @@
 #define MY_STACK
 
 #include <stdio.h>
+#include "Tree.h"
 
 //-------------------------------------------------------
 
 #define STACKDUMP(stack, dump_file) StackDump (stack, dump_file, __FILE__, __LINE__, __func__);
 
-#define CANARY_PROTECTION
-#define HASH_PROTECTION
-#define POISON_PROTECTION
+// #define CANARY_PROTECTION
+// #define HASH_PROTECTION
+// #define POISON_PROTECTION
 
 #ifdef CANARY_PROTECTION
 #define CANARY(...) __VA_ARGS__
@@ -30,7 +31,7 @@
 #endif // POISON_PROTECTION
 //-------------------------------------------------------
 
-typedef int stack_elem_t;
+// typedef int stack_elem_t;
 
 //-------------------------------------------------------
 
