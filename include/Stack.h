@@ -3,10 +3,14 @@
 
 #include <stdio.h>
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include "Common.h"
 =======
 #include "Tree.h"
 >>>>>>> 3d34d5a (Stack for Akinator)
+=======
+#include "Common.h"
+>>>>>>> e41512b (akinator update)
 
 //-------------------------------------------------------
 
