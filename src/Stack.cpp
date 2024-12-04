@@ -287,9 +287,9 @@ size_t StackHash (stack_t* stack)
 #include <string.h>
 #include <stdlib.h>
 
+#include "Common.h"
 #include "Stack.h"
 #include "MyAllocation.h"
-#include "Tree.h"
 
 //-------------------------------------------------------
 
@@ -336,10 +336,9 @@ stack_error_t StackDestroy (stack_t* stack)
     {
     if (stack == NULL)
         return STACK_BAD_STRUCT;
-    if (stack->data == NULL)
-        return STACK_BAD_DATA;
+    if (stack->data != NULL)
+        memset (stack->data, 0, (size_t) stack->capacity);
 
-    memset (stack->data, 0, (size_t) stack->capacity);
     free(stack->data); stack->data = NULL;
 
     stack->size = 0; stack->capacity = 0;
@@ -495,22 +494,22 @@ stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int 
         $PRINTERROR (STACK_BAD_STRUCT, dump_file);
         }
 
-    fprintf (dump_file, "stack_t [0x%p] at %s:%d (%s)\n", stack, file, n_line, func);
+    fprintf (dump_file, "stack_t [%p] at %s:%d (%s)\n", stack, file, n_line, func);
     fprintf (dump_file, "    { \n");
-    CANARY(fprintf (dump_file, "    left_canary (struct) = 0x%X \n", (unsigned int) stack->left_canary);)
+    CANARY(fprintf (dump_file, "    left_canary (struct) = %X \n", (unsigned int) stack->left_canary);)
     fprintf (dump_file, "    size = %ld \n", stack->size);
     fprintf (dump_file, "    capacity = %ld \n", stack->capacity);
-    HASH(fprintf (dump_file, "    hash = 0x%lX \n", stack->hash);)
+    HASH(fprintf (dump_file, "    hash = %lX \n", stack->hash);)
 
     if (stack->data == NULL)
         {
         $PRINTERROR (STACK_BAD_DATA, dump_file);
         }
 
-    fprintf (dump_file, "    data[0x%p]: \n", stack->data);
+    fprintf (dump_file, "    data[%p]: \n", stack->data);
     fprintf (dump_file, "        { \n");
 
-    CANARY(fprintf (dump_file, "        left_canary (data) = 0x%X\n", (unsigned int) stack->data[0]);)
+    CANARY(fprintf (dump_file, "        left_canary (data) = %X\n", (unsigned int) stack->data[0]);)
 
     for (int i = 0; i < stack->capacity; i++)
         {
