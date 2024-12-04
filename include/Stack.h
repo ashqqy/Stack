@@ -47,19 +47,19 @@ CANARY(const stack_elem_t STACK_CANARY = 0xBEB1A;)
 //-------------------------------------------------------
 
 struct stack_t
-    {
+{
     CANARY(stack_elem_t left_canary;)
     ssize_t size;
     ssize_t capacity;
     HASH(size_t hash;)
     stack_elem_t* data;
     CANARY(stack_elem_t right_canary;)
-    };
+};
 
 //-------------------------------------------------------
 
 enum stack_error_t
-    {
+{
     STACK_OK =                      1,
     STACK_BAD_STRUCT =              101,
     STACK_BAD_DATA =                102, 
@@ -74,7 +74,7 @@ enum stack_error_t
     STACK_CANNOT_CREATE_HASH =      111,
     STACK_BAD_HASH =                112,
     BAD_POPa =                      113
-    };
+};
 
 //-------------------------------------------------------
 

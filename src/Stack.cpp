@@ -13,15 +13,15 @@
 //-------------------------------------------------------
 
 stack_error_t StackInit (stack_t* stack, ssize_t capacity) 
-    {
+{
     if (stack == NULL)
         return STACK_BAD_STRUCT;
 
     if (capacity < 0)
-        {
+    {
         stack->capacity = capacity;
         return STACK_NEGATIVE_CAPACITY;
-        }
+    }
 
     if (capacity < MIN_CAPACITY)
         capacity = MIN_CAPACITY;
@@ -43,18 +43,17 @@ stack_error_t StackInit (stack_t* stack, ssize_t capacity)
     STACK_ASSERT (stack);
 
     return STACK_OK;
-    }
+}
 
 //-------------------------------------------------------
 
 stack_error_t StackDestroy (stack_t* stack)
-    {
+{
     if (stack == NULL)
         return STACK_BAD_STRUCT;
-    if (stack->data == NULL)
-        return STACK_BAD_DATA;
+    if (stack->data != NULL)
+        memset (stack->data, 0, (size_t) stack->capacity);
 
-    memset (stack->data, 0, (size_t) stack->capacity);
     free(stack->data); stack->data = NULL;
 
     stack->size = 0; stack->capacity = 0;
@@ -62,20 +61,20 @@ stack_error_t StackDestroy (stack_t* stack)
     HASH(stack->hash = 0;)
 
     return STACK_OK;
-    }
+}
 
 //-------------------------------------------------------
 
 stack_error_t StackPush (stack_t* stack, stack_elem_t elem_push)
-    {
+{
     STACK_ASSERT (stack);
 
     if ( (stack->size == stack->capacity) && (stack->size >= MIN_CAPACITY) )
-        {
+    {
         stack_error_t resize_err = StackResize (stack, stack->capacity * CAPACITY_GROWTH);
         if (resize_err != STACK_OK)
             return resize_err;
-        }
+    }
 
     stack->data[stack->size++ CANARY(+ 1)] = elem_push; // +1 из-за левой канарейки
 
@@ -84,23 +83,23 @@ stack_error_t StackPush (stack_t* stack, stack_elem_t elem_push)
     STACK_ASSERT (stack);
     
     return STACK_OK;
-    }
+}
 
 //-------------------------------------------------------
 
 stack_error_t StackPop (stack_t* stack, stack_elem_t* elem_pop)
-    {
+{
     STACK_ASSERT (stack);
 
     if (stack->size == 0)
         return BAD_POPa;
 
     if ( (stack->size <= stack->capacity / CAPACITY_DECREASE) && (stack->size >= MIN_CAPACITY) )
-        {
+    {
         stack_error_t resize_err = StackResize (stack, stack->capacity / CAPACITY_DECREASE);
         if (resize_err != STACK_OK)
             return resize_err;
-        }
+    }
 
     *elem_pop = stack->data[--stack->size CANARY(+ 1)]; // +1 из-за левой канарейки
     stack->data[stack->size CANARY(+ 1)] = STACK_POISON;
@@ -110,25 +109,25 @@ stack_error_t StackPop (stack_t* stack, stack_elem_t* elem_pop)
     STACK_ASSERT (stack);
 
     return STACK_OK;
-    }
+}
 
 //-------------------------------------------------------
 
 stack_error_t StackResize (stack_t* stack, ssize_t new_size)
-    {
+{
     if (stack->capacity == 0)
-        {
+    {
         stack->data = (stack_elem_t*) MyRecalloc (stack->data, 1 CANARY(+ N_CANARIES), sizeof (stack_elem_t), 
                                                  (size_t) stack->capacity CANARY(+ N_CANARIES - 1), (const void*) &STACK_POISON);
         stack->capacity = 1;
-        }
+    }
     else
-        {
+    {
         stack->data = (stack_elem_t*) MyRecalloc (stack->data, (size_t) new_size CANARY(+ N_CANARIES), 
                                                  sizeof (stack_elem_t), (size_t) stack->capacity CANARY(+ N_CANARIES - 1), 
                                                  (const void*) &STACK_POISON);
         stack->capacity = new_size;
-        }
+    }
 
     if (stack->data == NULL)
         return CANNOT_ALLOCATE_MEMORY;           
@@ -137,12 +136,12 @@ stack_error_t StackResize (stack_t* stack, ssize_t new_size)
     CANARY(stack->data[stack->capacity + 1] = STACK_CANARY;) // +1 из-за левой канарейки
 
     return STACK_OK;
-    }
+}
 
 //-------------------------------------------------------
 
 stack_error_t StackOk (stack_t* stack)
-    {
+{
     if (stack == NULL)                                             return STACK_BAD_STRUCT;
     if (stack->size < 0)                                           return STACK_NEGATIVE_SIZE;
     if (stack->capacity < 0)                                       return STACK_NEGATIVE_CAPACITY;
@@ -155,29 +154,29 @@ stack_error_t StackOk (stack_t* stack)
     HASH(if (stack->hash != StackHash (stack))                     return STACK_BAD_HASH;)
 
     return STACK_OK;
-    }
+}
 
 //-------------------------------------------------------
 
 void StackAssert (stack_t* stack, const char* file, int line, const char* func)
-    {
+{
     stack_error_t stack_error = StackOk (stack);
     if (stack_error != STACK_OK)
-        {
+    {
         printf ("%sERROR:%s %s %s \n", RED_COLOR, MAGENTA_COLOR, StackErrDescr (stack_error), DEFAULT_COLOR);
         StackDump (stack, stdout, file, line, func);
         assert ("StackOk" && !STACK_OK);
-        }
     }
+}
 
 //-------------------------------------------------------
 
 const char* StackErrDescr (stack_error_t stack_error)
-    {
+{
     #define $DESCR(stack_error) case stack_error: return #stack_error
 
     switch (stack_error)
-        {
+    {
         $DESCR(STACK_OK);
         $DESCR(STACK_BAD_STRUCT);
         $DESCR(STACK_BAD_DATA);
@@ -194,46 +193,46 @@ const char* StackErrDescr (stack_error_t stack_error)
         $DESCR(BAD_POPa);
         default:
             return "u are fucking forgot some error (dumb)";
-        }
+    }
 
     #undef $DESCR
-    }
+}
 
 //-------------------------------------------------------
 
 stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int n_line, const char* func)
-    {
+{
     #define $PRINTERROR(error, dump_file) fprintf (dump_file, "%s" #error " (DUMP) %s \n", MAGENTA_COLOR, DEFAULT_COLOR); return error;
 
     if (stack == NULL)
-        {
+    {
         $PRINTERROR (STACK_BAD_STRUCT, dump_file);
-        }
+    }
 
-    fprintf (dump_file, "stack_t [0x%p] at %s:%d (%s)\n", stack, file, n_line, func);
+    fprintf (dump_file, "stack_t [%p] at %s:%d (%s)\n", stack, file, n_line, func);
     fprintf (dump_file, "    { \n");
-    CANARY(fprintf (dump_file, "    left_canary (struct) = 0x%X \n", (unsigned int) stack->left_canary);)
+    CANARY(fprintf (dump_file, "    left_canary (struct) = %X \n", (unsigned int) stack->left_canary);)
     fprintf (dump_file, "    size = %ld \n", stack->size);
     fprintf (dump_file, "    capacity = %ld \n", stack->capacity);
-    HASH(fprintf (dump_file, "    hash = 0x%lX \n", stack->hash);)
+    HASH(fprintf (dump_file, "    hash = %lX \n", stack->hash);)
 
     if (stack->data == NULL)
-        {
+    {
         $PRINTERROR (STACK_BAD_DATA, dump_file);
-        }
+    }
 
-    fprintf (dump_file, "    data[0x%p]: \n", stack->data);
+    fprintf (dump_file, "    data[%p]: \n", stack->data);
     fprintf (dump_file, "        { \n");
 
-    CANARY(fprintf (dump_file, "        left_canary (data) = 0x%X\n", (unsigned int) stack->data[0]);)
+    CANARY(fprintf (dump_file, "        left_canary (data) = %X\n", (unsigned int) stack->data[0]);)
 
     for (int i = 0; i < stack->capacity; i++)
-        {
+    {
         if (i < stack->size)
-            fprintf (dump_file, "        *[%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
+            fprintf (dump_file, "        *[%d] = %p; \n", i, stack->data[i CANARY(+ 1)]);
         else 
-            fprintf (dump_file, "        [%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
-        }
+            fprintf (dump_file, "         [%d] = %p; \n", i, stack->data[i CANARY(+ 1)]);
+    }
 
     CANARY(fprintf (dump_file, "        right_canary (data) = 0x%X\n", (unsigned int) stack->data[stack->capacity + 1]);)
 
@@ -243,12 +242,12 @@ stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int 
 
     #undef $PRINTERROR
     return STACK_OK;
-    }
+}
 
 //-------------------------------------------------------
 
 size_t StackHash (stack_t* stack)
-    {
+{
     size_t hash = 5381;
 
     if (stack == NULL)
@@ -278,6 +277,6 @@ size_t StackHash (stack_t* stack)
         HASH(})
 
     return hash;
-    }
+}
 
 //-------------------------------------------------------
