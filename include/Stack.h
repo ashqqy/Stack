@@ -2,7 +2,7 @@
 #define MY_STACK
 
 #include <stdio.h>
-#include "Tree.h"
+#include "Common.h"
 
 //-------------------------------------------------------
 
@@ -47,15 +47,15 @@ CANARY(const stack_elem_t STACK_CANARY = 0xBEB1A;)
 
 //-------------------------------------------------------
 
-struct stack_t
-    {
-    CANARY(stack_elem_t left_canary;)
-    ssize_t size;
-    ssize_t capacity;
-    HASH(size_t hash;)
-    stack_elem_t* data;
-    CANARY(stack_elem_t right_canary;)
-    };
+// struct stack_t
+//     {
+//     CANARY(stack_elem_t left_canary;)
+//     ssize_t size;
+//     ssize_t capacity;
+//     HASH(size_t hash;)
+//     stack_elem_t* data;
+//     CANARY(stack_elem_t right_canary;)
+//     };
 
 //-------------------------------------------------------
 
