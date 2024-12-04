@@ -3,7 +3,7 @@ FLAGS = -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Waggressive-loop
 all: built run
 
 built:
-	g++ -Iinclude src/*.cpp ${FLAGS} -o main 
+	g++ -I./include -I./My-Allocation src/*.cpp My-allocation/*.cpp ${FLAGS} -o main 
 
 run:
 	./main
