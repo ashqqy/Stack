@@ -4,6 +4,7 @@
 #include <stdio.h>
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 #include "Common.h"
 =======
 #include "Tree.h"
@@ -11,14 +12,16 @@
 =======
 #include "Common.h"
 >>>>>>> e41512b (akinator update)
+=======
+>>>>>>> 6382748 (main branch update)
 
 //-------------------------------------------------------
 
 #define STACKDUMP(stack, dump_file) StackDump (stack, dump_file, __FILE__, __LINE__, __func__);
 
-// #define CANARY_PROTECTION
-// #define HASH_PROTECTION
-// #define POISON_PROTECTION
+#define CANARY_PROTECTION
+#define HASH_PROTECTION
+#define POISON_PROTECTION
 
 #ifdef CANARY_PROTECTION
 #define CANARY(...) __VA_ARGS__
@@ -39,7 +42,7 @@
 #endif // POISON_PROTECTION
 //-------------------------------------------------------
 
-// typedef int stack_elem_t;
+typedef int stack_elem_t;
 
 //-------------------------------------------------------
 
@@ -55,15 +58,15 @@ CANARY(const stack_elem_t STACK_CANARY = 0xBEB1A;)
 
 //-------------------------------------------------------
 
-// struct stack_t
-//     {
-//     CANARY(stack_elem_t left_canary;)
-//     ssize_t size;
-//     ssize_t capacity;
-//     HASH(size_t hash;)
-//     stack_elem_t* data;
-//     CANARY(stack_elem_t right_canary;)
-//     };
+struct stack_t
+    {
+    CANARY(stack_elem_t left_canary;)
+    ssize_t size;
+    ssize_t capacity;
+    HASH(size_t hash;)
+    stack_elem_t* data;
+    CANARY(stack_elem_t right_canary;)
+    };
 
 //-------------------------------------------------------
 
