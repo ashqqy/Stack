@@ -9,7 +9,7 @@
 //-------------------------------------------------------
 
 int main ()
-    {
+{
     stack_t stack = {};
     StackInit (&stack);
 
@@ -32,6 +32,6 @@ int main ()
     STACKDUMP (&stack, stdout);
 
     StackDestroy (&stack);
-    }
+}
 
 //-------------------------------------------------------

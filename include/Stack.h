@@ -59,7 +59,7 @@ struct stack_t
 //-------------------------------------------------------
 
 enum stack_error_t
-    {
+{
     STACK_OK =                      1,
     STACK_BAD_STRUCT =              101,
     STACK_BAD_DATA =                102, 
@@ -74,7 +74,7 @@ enum stack_error_t
     STACK_CANNOT_CREATE_HASH =      111,
     STACK_BAD_HASH =                112,
     BAD_POPa =                      113
-    };
+};
 
 //-------------------------------------------------------
 
