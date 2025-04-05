@@ -30,19 +30,23 @@ typedef int stack_elem_t;
 
 //-------------------------------------------------------
 
-const int MIN_CAPACITY = 10;
+static const int MIN_CAPACITY = 10;
 
-const int CAPACITY_GROWTH   = 2;
-const int CAPACITY_DECREASE = 2 * CAPACITY_GROWTH;
+static const int CAPACITY_GROWTH   = 2;
+static const int CAPACITY_DECREASE = 2 * CAPACITY_GROWTH;
 
-const stack_elem_t STACK_POISON = POISON(666);
+static const stack_elem_t STACK_POISON = POISON(666);
 
-CANARY(const int N_CANARIES = 2;)
-CANARY(const stack_elem_t STACK_CANARY = 0xBEB1A;)
+CANARY(static const int N_CANARIES = 2;)
+CANARY(static const stack_elem_t STACK_CANARY = 0xBEB1A;)
+
+static const char* const RED_COLOR     = "\033[1;31m";
+static const char* const MAGENTA_COLOR = "\033[1;35m";
+static const char* const DEFAULT_COLOR = "\033[1;0m";
 
 //-------------------------------------------------------
 
-struct stack_t
+typedef struct
 {
     CANARY(stack_elem_t left_canary;)
     ssize_t size;
@@ -50,11 +54,11 @@ struct stack_t
     HASH(size_t hash;)
     stack_elem_t* data;
     CANARY(stack_elem_t right_canary;)
-};
+} stack_t;
 
 //-------------------------------------------------------
 
-enum stack_error_t
+typedef enum
 {
     STACK_OK =                      1,
     STACK_BAD_STRUCT =              101,
@@ -70,17 +74,11 @@ enum stack_error_t
     STACK_CANNOT_CREATE_HASH =      111,
     STACK_BAD_HASH =                112,
     BAD_POPa =                      113
-};
+} stack_error_t;
 
 //-------------------------------------------------------
 
-const char* const RED_COLOR     = "\033[1;31m";
-const char* const MAGENTA_COLOR = "\033[1;35m";
-const char* const DEFAULT_COLOR = "\033[1;0m";
-
-//-------------------------------------------------------
-
-stack_error_t StackInit (stack_t* stack, ssize_t capacity = 10);
+stack_error_t StackInit (stack_t* stack, ssize_t capacity);
 stack_error_t StackDestroy (stack_t* stack);
 
 stack_error_t StackPush (stack_t* stack, stack_elem_t elem_push);

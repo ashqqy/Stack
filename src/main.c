@@ -5,7 +5,7 @@
 int main ()
 {
     stack_t stack = {};
-    StackInit (&stack);
+    StackInit (&stack, 10);
 
     StackPush (&stack, 133);
     StackPush (&stack, 133);
