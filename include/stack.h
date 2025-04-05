@@ -35,10 +35,10 @@ static const int MIN_CAPACITY = 10;
 static const int CAPACITY_GROWTH   = 2;
 static const int CAPACITY_DECREASE = 2 * CAPACITY_GROWTH;
 
-static const stack_elem_t STACK_POISON = POISON(666);
+static const stack_elem_t STACK_POISON = POISON(0xDEFACED);
 
 CANARY(static const int N_CANARIES = 2;)
-CANARY(static const stack_elem_t STACK_CANARY = 0xBEB1A;)
+CANARY(static const stack_elem_t STACK_CANARY = 0xBADF00D;)
 
 static const char* const RED_COLOR     = "\033[1;31m";
 static const char* const MAGENTA_COLOR = "\033[1;35m";

@@ -26,7 +26,7 @@ stack_error_t StackInit (stack_t* stack, ssize_t capacity)
     if (capacity < MIN_CAPACITY)
         capacity = MIN_CAPACITY;
 
-    stack->data = (stack_elem_t*) MyCalloc ((size_t) capacity CANARY(+ N_CANARIES), sizeof (stack_elem_t), (const void*) &STACK_POISON);
+    stack->data = (stack_elem_t*) MyCalloc ((size_t) capacity CANARY(+ N_CANARIES), sizeof (stack_elem_t), POISON((const void*) &STACK_POISON));
     if (stack->data == NULL)
         return CANNOT_ALLOCATE_MEMORY;
 
@@ -115,17 +115,19 @@ stack_error_t StackPop (stack_t* stack, stack_elem_t* elem_pop)
 
 stack_error_t StackResize (stack_t* stack, ssize_t new_size)
 {
+    assert (stack != NULL);
+
     if (stack->capacity == 0)
     {
         stack->data = (stack_elem_t*) MyRecalloc (stack->data, 1 CANARY(+ N_CANARIES), sizeof (stack_elem_t), 
-                                                 (size_t) stack->capacity CANARY(+ N_CANARIES - 1), (const void*) &STACK_POISON);
+                                                 (size_t) stack->capacity CANARY(+ N_CANARIES - 1), POISON((const void*) &STACK_POISON));
         stack->capacity = 1;
     }
     else
     {
         stack->data = (stack_elem_t*) MyRecalloc (stack->data, (size_t) new_size CANARY(+ N_CANARIES), 
                                                  sizeof (stack_elem_t), (size_t) stack->capacity CANARY(+ N_CANARIES - 1), 
-                                                 (const void*) &STACK_POISON);
+                                                 POISON((const void*) &STACK_POISON));
         stack->capacity = new_size;
     }
 
@@ -215,7 +217,7 @@ stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int 
 
     fprintf (dump_file, "stack_t [%p] at %s:%d (%s) \n", stack, file, n_line, func);
     fprintf (dump_file, "{ \n");
-    CANARY(fprintf (dump_file, "\t left_canary (struct) = %X \n", (unsigned int) stack->left_canary);)
+    CANARY(fprintf (dump_file, "\t left_canary_struct = 0x%X \n", (unsigned int) stack->left_canary);)
     fprintf (dump_file, "\t size = %ld \n", stack->size);
     fprintf (dump_file, "\t capacity = %ld \n", stack->capacity);
     HASH(fprintf (dump_file, "\t hash = %lX \n", stack->hash);)
@@ -228,20 +230,20 @@ stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int 
     fprintf (dump_file, "\t data[%p]: \n", stack->data);
     fprintf (dump_file, "\t { \n");
 
-    CANARY(fprintf (dump_file, "\t\t left_canary (data) = %X \n", (unsigned int) stack->data[0]);)
+    CANARY(fprintf (dump_file, "\t\t left_canary_data = 0x%X \n", (unsigned int) stack->data[0]);)
 
     for (int i = 0; i < stack->capacity; i++)
     {
         if (i < stack->size)
             fprintf (dump_file, "\t\t *[%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
         else 
-            fprintf (dump_file, "\t\t [%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
+            fprintf (dump_file, "\t\t [%d] = %d; (unused)\n", i, stack->data[i CANARY(+ 1)]);
     }
 
-    CANARY(fprintf (dump_file, "\t\t right_canary (data) = 0x%X \n", (unsigned int) stack->data[stack->capacity + 1]);)
+    CANARY(fprintf (dump_file, "\t\t right_canary_data = 0x%X \n", (unsigned int) stack->data[stack->capacity + 1]);)
 
     fprintf (dump_file, "\t } \n");
-    CANARY(fprintf (dump_file, "\t right_canary (struct) = 0x%X \n", (unsigned int) stack->right_canary);)
+    CANARY(fprintf (dump_file, "\t right_canary_struct_ = 0x%X \n", (unsigned int) stack->right_canary);)
     fprintf (dump_file, "} \n");
 
     #undef $PRINTERROR
@@ -257,28 +259,30 @@ size_t StackHash (stack_t* stack)
     if (stack == NULL)
         return hash;
 
-    // don't hash the old hash
-    HASH(size_t old_hash = stack->hash;)
-    HASH(stack->hash = 0;)
+    HASH(
+        // don't hash the old hash
+        size_t old_hash = stack->hash;
+        stack->hash = 0;
 
-    // struct hashing
-    HASH(for (size_t i = 0; i < sizeof (stack_t); i++))
-        HASH({)
-        HASH(char hash_element = (char) *((char*) stack + i);)
-        HASH(hash = ((hash << 5) + hash) + (size_t) hash_element;)
-        HASH(})
-    
-    HASH(stack->hash = old_hash;)
+        // struct hashing
+        for (size_t i = 0; i < sizeof (stack_t); i++)
+        {
+            char hash_element = (char) *((char*) stack + i);
+            hash = ((hash << 5) + hash) + (size_t) hash_element;
+        }
+            
+        stack->hash = old_hash;
 
-    HASH(if (stack->data == NULL))
-        HASH(return hash;)
+        if (stack->data == NULL)
+            return hash;
 
-    // buffer hashing
-    HASH(for (int i = 0; i < stack->capacity + N_CANARIES; i++))
-        HASH({)
-        HASH(size_t hash_element = (size_t) stack->data[i];)
-        HASH(hash = ((hash << 5) + hash) + hash_element;)
-        HASH(})
+        // buffer hashing
+        for (int i = 0; i < stack->capacity + N_CANARIES; i++)
+        {
+            size_t hash_element = (size_t) stack->data[i];
+            hash = ((hash << 5) + hash) + hash_element;
+        }
+        )
 
     return hash;
 }
