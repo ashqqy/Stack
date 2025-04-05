@@ -3,8 +3,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Stack.h"
-#include "MyAllocation.h"
+#include "stack.h"
+#include "allocation.h"
 
 //-------------------------------------------------------
 
@@ -76,7 +76,7 @@ stack_error_t StackPush (stack_t* stack, stack_elem_t elem_push)
             return resize_err;
     }
 
-    stack->data[stack->size++ CANARY(+ 1)] = elem_push; // +1 из-за левой канарейки
+    stack->data[stack->size++ CANARY(+ 1)] = elem_push; // +1 because of left canary
 
     HASH(stack->hash = StackHash (stack);)
 
@@ -101,7 +101,7 @@ stack_error_t StackPop (stack_t* stack, stack_elem_t* elem_pop)
             return resize_err;
     }
 
-    *elem_pop = stack->data[--stack->size CANARY(+ 1)]; // +1 из-за левой канарейки
+    *elem_pop = stack->data[--stack->size CANARY(+ 1)]; // +1 because of left canary
     stack->data[stack->size CANARY(+ 1)] = STACK_POISON;
 
     HASH(stack->hash = StackHash (stack);)
@@ -133,7 +133,7 @@ stack_error_t StackResize (stack_t* stack, ssize_t new_size)
         return CANNOT_ALLOCATE_MEMORY;           
 
     CANARY(stack->data[0] = STACK_CANARY;)
-    CANARY(stack->data[stack->capacity + 1] = STACK_CANARY;) // +1 из-за левой канарейки
+    CANARY(stack->data[stack->capacity + 1] = STACK_CANARY;) // +1 because of left canary
 
     return STACK_OK;
 }
@@ -173,7 +173,9 @@ void StackAssert (stack_t* stack, const char* file, int line, const char* func)
 
 const char* StackErrDescr (stack_error_t stack_error)
 {
-    #define $DESCR(stack_error) case stack_error: return #stack_error
+    #define $DESCR(stack_error)  \
+        case stack_error:        \
+            return #stack_error; \
 
     switch (stack_error)
     {
@@ -202,43 +204,45 @@ const char* StackErrDescr (stack_error_t stack_error)
 
 stack_error_t StackDump (stack_t* stack, FILE* dump_file, const char* file, int n_line, const char* func)
 {
-    #define $PRINTERROR(error, dump_file) fprintf (dump_file, "%s" #error " (DUMP) %s \n", MAGENTA_COLOR, DEFAULT_COLOR); return error;
+    #define $PRINTERROR(error, dump_file)                                               \
+        fprintf (dump_file, "%s" #error " (DUMP) %s \n", MAGENTA_COLOR, DEFAULT_COLOR); \
+        return error;                                                                   \
 
     if (stack == NULL)
     {
         $PRINTERROR (STACK_BAD_STRUCT, dump_file);
     }
 
-    fprintf (dump_file, "stack_t [%p] at %s:%d (%s)\n", stack, file, n_line, func);
-    fprintf (dump_file, "    { \n");
-    CANARY(fprintf (dump_file, "    left_canary (struct) = %X \n", (unsigned int) stack->left_canary);)
-    fprintf (dump_file, "    size = %ld \n", stack->size);
-    fprintf (dump_file, "    capacity = %ld \n", stack->capacity);
-    HASH(fprintf (dump_file, "    hash = %lX \n", stack->hash);)
+    fprintf (dump_file, "stack_t [%p] at %s:%d (%s) \n", stack, file, n_line, func);
+    fprintf (dump_file, "{ \n");
+    CANARY(fprintf (dump_file, "\t left_canary (struct) = %X \n", (unsigned int) stack->left_canary);)
+    fprintf (dump_file, "\t size = %ld \n", stack->size);
+    fprintf (dump_file, "\t capacity = %ld \n", stack->capacity);
+    HASH(fprintf (dump_file, "\t hash = %lX \n", stack->hash);)
 
     if (stack->data == NULL)
     {
         $PRINTERROR (STACK_BAD_DATA, dump_file);
     }
 
-    fprintf (dump_file, "    data[%p]: \n", stack->data);
-    fprintf (dump_file, "        { \n");
+    fprintf (dump_file, "\t data[%p]: \n", stack->data);
+    fprintf (dump_file, "\t { \n");
 
-    CANARY(fprintf (dump_file, "        left_canary (data) = %X\n", (unsigned int) stack->data[0]);)
+    CANARY(fprintf (dump_file, "\t\t left_canary (data) = %X \n", (unsigned int) stack->data[0]);)
 
     for (int i = 0; i < stack->capacity; i++)
     {
         if (i < stack->size)
-            fprintf (dump_file, "        *[%d] = %p; \n", i, stack->data[i CANARY(+ 1)]);
+            fprintf (dump_file, "\t\t *[%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
         else 
-            fprintf (dump_file, "         [%d] = %p; \n", i, stack->data[i CANARY(+ 1)]);
+            fprintf (dump_file, "\t\t [%d] = %d; \n", i, stack->data[i CANARY(+ 1)]);
     }
 
-    CANARY(fprintf (dump_file, "        right_canary (data) = 0x%X\n", (unsigned int) stack->data[stack->capacity + 1]);)
+    CANARY(fprintf (dump_file, "\t\t right_canary (data) = 0x%X \n", (unsigned int) stack->data[stack->capacity + 1]);)
 
-    fprintf (dump_file, "        } \n");
-    CANARY(fprintf (dump_file, "    right_canary (struct) = 0x%X \n", (unsigned int) stack->right_canary);)
-    fprintf (dump_file, "    } \n");
+    fprintf (dump_file, "\t } \n");
+    CANARY(fprintf (dump_file, "\t right_canary (struct) = 0x%X \n", (unsigned int) stack->right_canary);)
+    fprintf (dump_file, "} \n");
 
     #undef $PRINTERROR
     return STACK_OK;
@@ -253,11 +257,11 @@ size_t StackHash (stack_t* stack)
     if (stack == NULL)
         return hash;
 
-    // обнуляем хеш в структуре, чтобы он не хешировался
+    // don't hash the old hash
     HASH(size_t old_hash = stack->hash;)
     HASH(stack->hash = 0;)
 
-    // считаем хеш для структуры
+    // struct hashing
     HASH(for (size_t i = 0; i < sizeof (stack_t); i++))
         HASH({)
         HASH(char hash_element = (char) *((char*) stack + i);)
@@ -269,7 +273,7 @@ size_t StackHash (stack_t* stack)
     HASH(if (stack->data == NULL))
         HASH(return hash;)
 
-    // считаем хеш для буфера
+    // buffer hashing
     HASH(for (int i = 0; i < stack->capacity + N_CANARIES; i++))
         HASH({)
         HASH(size_t hash_element = (size_t) stack->data[i];)

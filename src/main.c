@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-
-#include "MyAllocation.h"
-#include "Stack.h"
+#include "stack.h"
 
 //-------------------------------------------------------
 
